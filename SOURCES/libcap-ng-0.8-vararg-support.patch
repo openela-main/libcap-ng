@@ -1,0 +1,13 @@
+diff -ru a/bindings/src/capng_swig.i b/bindings/src/capng_swig.i
+--- a/bindings/src/capng_swig.i
++++ b/bindings/src/capng_swig.i
+@@ -26,6 +26,9 @@
+ %}
+ 
+ #if defined(SWIGPYTHON)
++
++%varargs(16, unsigned capability = 0) capng_updatev;
++
+ %except(python) {
+   $action
+   if (result < 0) {
