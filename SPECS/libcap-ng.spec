@@ -1,15 +1,28 @@
 Summary: Alternate posix capabilities library
 Name: libcap-ng
-Version: 0.8.4
-Release: 6%{?dist}
+Version: 0.9.3
+Release: 2%{?dist}
 License: LGPL-2.0-or-later
 URL: https://people.redhat.com/sgrubb/libcap-ng/
 Source0: https://people.redhat.com/sgrubb/libcap-ng/%{name}-%{version}.tar.gz
-Patch1: libcap-ng-0.8.5-python-exception.patch
+Patch1: libcap-ng-0.9.3-cap-audit-task-comm-len.patch
+%global bpf_arches aarch64 x86_64 ppc64le s390x
+%ifarch %{bpf_arches}
+%global cap_audit --enable-cap-audit
+%endif
 BuildRequires: gcc
 BuildRequires: make
-BuildRequires: kernel-headers >= 2.6.11 
+BuildRequires: autoconf
+BuildRequires: automake
+BuildRequires: libtool
+BuildRequires: kernel-headers >= 2.6.11
 BuildRequires: libattr-devel
+%ifarch %{bpf_arches}
+BuildRequires: clang
+BuildRequires: bpftool
+BuildRequires: libbpf-devel
+BuildRequires: audit-libs-devel
+%endif
 
 %description
 Libcap-ng is a library that makes using posix capabilities easier
@@ -49,9 +62,12 @@ lets you set the file system based capabilities.
 %prep
 %setup -q
 %patch -P1 -p1
+touch NEWS
+cp README.md README
+autoreconf -fvi
 
 %build
-%configure --libdir=%{_libdir} --with-python=no --with-python3
+%configure --libdir=%{_libdir} --with-python=no --with-python3 %{?cap_audit}
 %make_build CFLAGS="%{optflags}"
 
 %install
@@ -86,14 +102,24 @@ make check
 
 %files python3
 %attr(755,root,root) %{python3_sitearch}/*
-%{python3_sitearch}/capng.py*
 
 %files utils
 %license COPYING
 %attr(0755,root,root) %{_bindir}/*
 %attr(0644,root,root) %{_mandir}/man8/*
+%{_datadir}/bash-completion/completions/*
 
 %changelog
+* Tue Jun 16 2026 Adam Prikryl <aprikryl@redhat.com> - 0.9.3-2
+- Rebuild to enable netcap --advanced (kernel-headers now provides vm_sockets.h)
+  Resolves: RHEL-208587
+- Fix build failure on non-BPF architectures
+  Resolves: RHEL-185783
+
+* Thu May 14 2026 Sergio Arroutbi <sarroutb@redhat.com> - 0.9.3-1
+- Bump release to v0.9.3
+  Resolves: RHEL-160081
+
 * Tue Oct 29 2024 Troy Dawson <tdawson@redhat.com> - 0.8.4-6
 - Bump release for October 2024 mass rebuild:
   Resolves: RHEL-64018

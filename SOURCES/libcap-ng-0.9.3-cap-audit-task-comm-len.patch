@@ -1,0 +1,24 @@
+From: Sergio Arroutbi <sarroutb@redhat.com>
+Subject: cap-audit: define TASK_COMM_LEN fallback for BPF compilation
+
+vmlinux.h is generated from BTF data and contains only type/struct
+definitions, not preprocessor macros. TASK_COMM_LEN is a #define in
+linux/sched.h (value 16) and is not present in vmlinux.h, causing a
+build failure when compiling the BPF program with clang.
+
+Add a #ifndef guard to define it when missing.
+
+diff --git a/utils/cap-audit/cap_audit.bpf.c b/utils/cap-audit/cap_audit.bpf.c
+--- a/utils/cap-audit/cap_audit.bpf.c
++++ b/utils/cap-audit/cap_audit.bpf.c
+@@ -27,6 +27,10 @@
+ #define CAP_OPT_NOAUDIT 2
+ #endif
+
++#ifndef TASK_COMM_LEN
++#define TASK_COMM_LEN 16
++#endif
++
+ #include <bpf/bpf_core_read.h>
+ #include <bpf/bpf_helpers.h>
+ #include <bpf/bpf_tracing.h>
